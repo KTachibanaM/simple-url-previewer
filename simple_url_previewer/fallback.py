@@ -12,15 +12,16 @@ class FallbackSitePreviewer(SitePreviewer):
         full_url = parse_result.geturl()
         html_doc = requests.get(full_url).content
         bs = BeautifulSoup(html_doc, "html.parser")
-        images = list(map(lambda img: self.sanitize_src(parse_result, img['src']), bs.find_all("img")))
+        images = []
+        for img in bs.find_all("img"):
+            if "src" in img.attrs:
+                src = img["src"]
+                if src.startswith('/'):
+                    # looks like using relative path
+                    src = f"{parse_result.scheme}://{parse_result.netloc}{src}"
+                images.append(src)
         return Preview(
             title=bs.title.text,
             images=images,
             digest=''  # todo
         )
-
-    def sanitize_src(self, parse_result: ParseResult, src: str) -> str:
-        if src.startswith('/'):
-            # looks like using relative path
-            return f"{parse_result.scheme}://{parse_result.netloc}{src}"
-        return src

@@ -56,6 +56,7 @@ def api():
             "error_message": pe.message
         }), 400
     except Exception as e:
+        # todo: warn me
         logging.exception(e)
         return jsonify({
             "status": "error",
