@@ -1,8 +1,15 @@
 import logging
 from flask import Flask, request, jsonify
-from .simple_url_previewer import Previewer, PreviewError
+from simple_url_previewer import Previewer, PreviewError
+from simple_url_previewer.pixiv import PixivPreviewer
+from simple_url_previewer.fallback import FallbackSitePreviewer
 
-previewer = Previewer()
+previewer = Previewer(
+    [
+        PixivPreviewer()
+    ],
+    FallbackSitePreviewer()
+)
 
 app = Flask(__name__)
 
@@ -36,7 +43,11 @@ def api():
         preview = previewer.preview(url)
         return jsonify({
             "status": "ok",
-            "payload": {}  # TODO
+            "payload": {
+                "title": preview.title,
+                "images": preview.images,
+                "digest": preview.digest
+            }
         })
     except PreviewError as pe:
         return jsonify({
@@ -44,7 +55,7 @@ def api():
             "error_message": pe.message
         }), 400
     except Exception as e:
-        logging.error(e)
+        logging.exception(e)
         return jsonify({
             "status": "error",
             "error_message": "unknown error"
